@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <daw/char_range/daw_char_range.h>
+#include <daw/daw_parser_helper.h>
 
 #include "puny_coder.h"
 
@@ -38,7 +39,8 @@ namespace daw {
 			static size_t const INITIAL_BIAS = 72;
 			static size_t const INITIAL_N = 128;
 			constexpr static auto const PREFIX = "xn--";
-			static char const DELIMITER = '-';
+			static size_t const PREFIX_SIZE = 4;
+			static auto const DELIMITER = '-';
 		};	// constants
 
 		template<typename CP>
@@ -171,6 +173,72 @@ namespace daw {
 			return constants::PREFIX + output;
 		}
 
+		bool begins_with_prefix( daw::range::CharRange const & input ) {
+			return daw::parser::starts_with( input.begin( ), input.end( ), constants::PREFIX, constants::PREFIX + constants::PREFIX_SIZE + 1, []( auto c1, auto c2 ) {
+				return to_lower( c1 ) == to_lower( c2 );
+			} );
+		}
+
+		template<typename T>
+		size_t decode_to_value( T value ) {
+			if( daw::parser::in_range( value, 'a', 'z' ) ) {
+				return value - 'a';
+			} else if( daw::parser::in_range( value, 'A', 'Z' ) ) {
+				return value - 'A';
+			} else if( daw::parser::in_range( value, '0', '9' ) ) {
+				return (value - '0') + 26;
+			}
+			throw std::runtime_error( "Unexpected character provided" );
+		}
+
+		std::u32string decode_part( daw::range::CharRange input ) {
+			if( input.size( ) < 1 || input.size( ) > 63 ) {
+				throw std::runtime_error( "The size of the part must be between 1 and 63 inclusive" );
+			}
+			if( !begins_with_prefix( input ) ) {
+				return U"";
+			}
+			input.advance( constants::PREFIX_SIZE );
+
+			auto n = constants::INITIAL_N;
+			size_t i = 0;
+			auto bias = constants::INITIAL_BIAS;
+			
+			std::u32string output;
+			{
+				auto basic = daw::parser::until_value( input.begin( ), input.end( ), '-' );
+				if( basic ) {
+					
+					std::transform( basic.begin( ), basic.end( ), std::back_inserter( output ), []( auto c ) {
+							return static_cast<char32_t>( c );
+					} );
+					input.advance( output.size( ) );
+				}
+			}
+			for( auto pos = input.begin( ); pos != input.end( ); ) {
+				auto old_i = i;
+				size_t w = 1;
+				for( auto k = constants::BASE; ; k += constants::BASE ) {
+					auto digit = decode_to_value( *pos++ );			
+					i += digit * w;
+					auto t = calculate_threshold( k, bias );
+
+					if( digit < k ) {
+						break;
+					}
+
+					w *= constants::BASE - t;
+				}
+				bias = adapt( i - old_i, output.size( ), 0 == old_i );
+				n += i/output.size( );
+				auto p1 = output.substr( 0, i );
+				auto p2 = output.substr( i );
+				output = p1 + static_cast<char32_t>( n ) + p2;
+				++i;
+			}
+			return output;
+		}
+
 		template<typename Delemiter>
 		std::vector<boost::string_ref> split( boost::string_ref input, Delemiter delemiter ) {
 			std::vector<boost::string_ref> result;
@@ -191,12 +259,30 @@ namespace daw {
 		bool is_first = true;
 		for( auto const & part : parts ) {
 			if( !is_first ) {
-				ss << ".";
+				ss << '.';
 			} else {
 				is_first = false;
 			}
 			if( !part.empty( ) ) {
-				ss << encode_part( daw::range::create_char_range( part.begin( ), part.end( )));
+				ss << encode_part( daw::range::create_char_range( part.begin( ), part.end( ) ) );
+			}
+		}
+		return ss.str( );
+	}
+
+	std::string from_puny_code( boost::string_ref input ) {
+		auto parts = split( input, '.' );
+		bool is_first = true;
+		std::stringstream ss;
+		for( auto const & part: parts ) {
+			if( !is_first ) {
+				ss << '.';
+			} else {
+				is_first = false;
+			}
+			if( !part.empty( ) ) {
+				auto u32str = decode_part( daw::range::create_char_range( part.begin( ), part.end( ) ) );
+				ss << daw::from_u32string( u32str );
 			}
 		}
 		return ss.str( );

@@ -54,18 +54,35 @@ struct puny_tests_t: public daw::json::JsonLink<puny_tests_t> {
 	}
 };	// puny_tests_t
 
-bool test_puny( puny_tests_t::puny_test_t test_case ) {
+bool test_puny_encode( puny_tests_t::puny_test_t test_case ) {
 	std::cout << "Testing: " << test_case.in << " Expecting: " << test_case.out << " Got: ";
 	auto result = daw::to_puny_code( test_case.in );
 	std::cout << result << std::endl;
 	return result == test_case.out;
 }
 
-BOOST_AUTO_TEST_CASE( punycode_test ) {
+BOOST_AUTO_TEST_CASE( punycode_test_encode ) {
 	std::cout << "PunyCode\n";
-	auto config_data = puny_tests_t{ }.decode_file( "../puny_tests.json" );
+	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
 	for( auto const & puny : config_data.tests ) {
-		BOOST_REQUIRE( test_puny( puny ) );
+		BOOST_REQUIRE( test_puny_encode( puny ) );
+	}
+	std::cout << std::endl;
+}
+
+bool test_puny_decode( puny_tests_t::puny_test_t test_case ) {
+	std::cout << "Testing: " << test_case.in << " Expecting: " << test_case.out << " Got: ";
+	auto result = daw::from_puny_code( test_case.out );
+	std::cout << result << std::endl;
+	return result == test_case.in;
+}
+
+
+BOOST_AUTO_TEST_CASE( punycode_test_decode ) {
+	std::cout << "PunyCode\n";
+	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
+	for( auto const & puny : config_data.tests ) {
+		BOOST_REQUIRE( test_puny_decode( puny ) );
 	}
 	std::cout << std::endl;
 }
