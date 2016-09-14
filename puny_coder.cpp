@@ -174,7 +174,8 @@ namespace daw {
 		}
 
 		bool begins_with_prefix( daw::range::CharRange const & input ) {
-			return daw::parser::starts_with( input.begin( ), input.end( ), constants::PREFIX, constants::PREFIX + constants::PREFIX_SIZE + 1, []( auto c1, auto c2 ) {
+			static std::string const prefix = constants::PREFIX;
+			return daw::parser::starts_with( input.begin( ), input.end( ), prefix.begin( ), prefix.end( ), []( auto c1, auto c2 ) {
 				return to_lower( c1 ) == to_lower( c2 );
 			} );
 		}
@@ -191,50 +192,55 @@ namespace daw {
 			throw std::runtime_error( "Unexpected character provided" );
 		}
 
-		std::u32string decode_part( daw::range::CharRange input ) {
-			if( input.size( ) < 1 || input.size( ) > 63 ) {
+		std::u32string decode_part( daw::range::CharRange u8input ) {
+			if( u8input.size( ) < 1 || u8input.size( ) > 63 ) {
 				throw std::runtime_error( "The size of the part must be between 1 and 63 inclusive" );
 			}
-			if( !begins_with_prefix( input ) ) {
-				return U"";
+			if( !begins_with_prefix( u8input ) ) {
+				std::u32string result;
+				std::copy( u8input.begin( ), u8input.end( ), std::back_inserter( result ) );
+				return result;
+			} else {
+				static std::string const prefix = constants::PREFIX;
+				u8input.advance( prefix.size( ) );
 			}
-			input.advance( constants::PREFIX_SIZE );
+			auto input = u8input.to_u32string( );
+
+			auto basic_rng = daw::parser::until_last_of( input.begin( ), input.end( ), U'-' );
+
+			std::u32string output;
+			if( basic_rng ) {
+				std::transform( basic_rng.begin( ), basic_rng.end( ), std::back_inserter( output ), []( auto c ) {
+					return static_cast<char32_t>( c );
+				} );
+			}
 
 			auto n = constants::INITIAL_N;
-			size_t i = 0;
 			auto bias = constants::INITIAL_BIAS;
-			
-			std::u32string output;
-			{
-				auto basic = daw::parser::until_value( input.begin( ), input.end( ), '-' );
-				if( basic ) {
-					
-					std::transform( basic.begin( ), basic.end( ), std::back_inserter( output ), []( auto c ) {
-							return static_cast<char32_t>( c );
-					} );
-					input.advance( output.size( ) );
-				}
-			}
-			for( auto pos = input.begin( ); pos != input.end( ); ) {
-				auto old_i = i;
+
+			size_t b = basic_rng ? 1 + static_cast<size_t>(std::distance( basic_rng.begin( ), basic_rng.end( ) )) : 0;
+
+			for( size_t i=0; b < input.size( ); ++i ) {
+				auto original_i = i;
 				size_t w = 1;
 				for( auto k = constants::BASE; ; k += constants::BASE ) {
-					auto digit = decode_to_value( *pos++ );			
-					i += digit * w;
-					auto t = calculate_threshold( k, bias );
+					auto d = decode_to_value( input[b++] );
 
-					if( digit < k ) {
+					i += d*w;
+					
+					auto t = calculate_threshold( k, bias );
+					if( d < t ) {
 						break;
 					}
-
 					w *= constants::BASE - t;
 				}
-				bias = adapt( i - old_i, output.size( ), 0 == old_i );
-				n += i/output.size( );
-				auto p1 = output.substr( 0, i );
-				auto p2 = output.substr( i );
-				output = p1 + static_cast<char32_t>( n ) + p2;
-				++i;
+				auto x = output.size( ) + 1;
+				bias = adapt( i - original_i, x, 0 == original_i );
+
+				n += i/x;
+
+				i %= x;
+				output.insert( i, 1, static_cast<char32_t>( n ) );
 			}
 			return output;
 		}

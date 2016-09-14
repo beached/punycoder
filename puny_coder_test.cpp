@@ -26,6 +26,7 @@
 #include <iostream>
 
 #include <daw/json/daw_json_link.h>
+#include <daw/daw_parser_helper.h>
 
 #include "puny_coder.h"
 
@@ -70,13 +71,25 @@ BOOST_AUTO_TEST_CASE( punycode_test_encode ) {
 	std::cout << std::endl;
 }
 
-bool test_puny_decode( puny_tests_t::puny_test_t test_case ) {
-	std::cout << "Testing: " << test_case.in << " Expecting: " << test_case.out << " Got: ";
-	auto result = daw::from_puny_code( test_case.out );
-	std::cout << result << std::endl;
-	return result == test_case.in;
+bool equal_nc( std::u32string lhs, std::u32string rhs ) {
+	return std::equal( lhs.begin( ), lhs.end( ), rhs.begin( ), rhs.end( ), []( auto l, auto r ) {
+		auto n = daw::parser::in_range( l, 'A', 'Z' ) ? l | 0x20 : l;
+		auto m = daw::parser::in_range( r, 'A', 'Z' ) ? r | 0x20 : r;
+		return n == m;
+	});
 }
 
+std::u32string to_u32string( boost::string_ref value ) {
+	auto tmp = daw::range::create_char_range( value.begin( ), value.end( ) );
+	return tmp.to_u32string( );
+}
+
+bool test_puny_decode( puny_tests_t::puny_test_t test_case ) {
+	std::cout << "Testing: " << test_case.out << " Expecting: " << test_case.in << " Got: ";
+	auto result = daw::from_puny_code( test_case.out );
+	std::cout << result << std::endl;
+	return equal_nc( to_u32string( result ), to_u32string( test_case.in ) );
+}
 
 BOOST_AUTO_TEST_CASE( punycode_test_decode ) {
 	std::cout << "PunyCode\n";
