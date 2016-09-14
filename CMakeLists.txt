@@ -70,7 +70,7 @@ add_dependencies( puny_coder header_libraries_prj char_range_prj )
 target_link_libraries( puny_coder char_range ${Boost_LIBRARIES} )
 
 install( TARGETS puny_coder DESTINATION lib )
-install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/punycoder )
+install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/puny_coder )
 
 add_executable( puny_coder_test_bin puny_coder_test.cpp ${HEADER_FILES} )
 add_dependencies( puny_coder_test_bin parse_json_prj )
