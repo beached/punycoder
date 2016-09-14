@@ -63,7 +63,7 @@ bool test_puny_encode( puny_tests_t::puny_test_t test_case ) {
 }
 
 BOOST_AUTO_TEST_CASE( punycode_test_encode ) {
-	std::cout << "PunyCode\n";
+	std::cout << "PunyCode Encoding\n";
 	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
 	for( auto const & puny : config_data.tests ) {
 		BOOST_REQUIRE( test_puny_encode( puny ) );
@@ -92,7 +92,7 @@ bool test_puny_decode( puny_tests_t::puny_test_t test_case ) {
 }
 
 BOOST_AUTO_TEST_CASE( punycode_test_decode ) {
-	std::cout << "PunyCode\n";
+	std::cout << "PunyCode Decoding\n";
 	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
 	for( auto const & puny : config_data.tests ) {
 		BOOST_REQUIRE( test_puny_decode( puny ) );
