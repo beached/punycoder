@@ -1,4 +1,4 @@
-# punycoder
+#Puny Coder
 Puny enoder/decoder in C++
 
 To use, call the to_puny_code or from_puny_code functions with a variable that is a string or a char * that has the domain name to encode.
