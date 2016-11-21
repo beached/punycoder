@@ -40,6 +40,44 @@ struct puny_tests_t: public daw::json::JsonLink<puny_tests_t> {
 				in{ },
 				out{ } {
 
+			set_links( );
+		}
+
+		~puny_test_t( ) = default;
+
+		puny_test_t( puny_test_t const & other ):
+				daw::json::JsonLink<puny_test_t>{ },
+				in{ other.in },
+				out{ other.out } {
+
+			set_links( );
+		}
+
+		puny_test_t( puny_test_t && other ):
+				daw::json::JsonLink<puny_test_t>{ },
+				in{ std::move( other.in ) },
+				out{ std::move( other.out ) } {
+
+			set_links( );
+		}
+		
+		puny_test_t & operator=( puny_test_t const & rhs ) {
+			if( this != &rhs ) {
+				in = rhs.in;
+				out = rhs.out;
+			}
+			return *this;
+		}
+
+		puny_test_t & operator=( puny_test_t && rhs ) {
+			if( this != &rhs ) {
+				in = std::move( rhs.in );
+				out = std::move( rhs.out );
+			}
+			return *this;
+		}
+	private:
+		void set_links( ) {
 			link_string( "in", in );
 			link_string( "out", out );
 		}
@@ -53,6 +91,36 @@ struct puny_tests_t: public daw::json::JsonLink<puny_tests_t> {
 
 		link_array( "tests", tests );
 	}
+	
+	~puny_tests_t( ) = default;
+
+	puny_tests_t( puny_tests_t const & other ):
+			daw::json::JsonLink<puny_tests_t>{ },
+			tests{ other.tests } {
+
+		link_array( "tests", tests );
+	}
+
+	puny_tests_t( puny_tests_t && other ):
+			daw::json::JsonLink<puny_tests_t>{ },
+			tests{ std::move( other.tests ) } {
+
+		link_array( "tests", tests );
+	}
+
+	puny_tests_t & operator=( puny_tests_t const & rhs ) {
+		if( this != &rhs ) {
+			tests = rhs.tests;
+		}
+		return *this;
+	}
+
+	puny_tests_t & operator=( puny_tests_t && rhs ) {
+		if( this != &rhs ) {
+			tests = std::move( rhs.tests );
+		}
+		return *this;
+	}
 };	// puny_tests_t
 
 bool test_puny_encode( puny_tests_t::puny_test_t test_case ) {
@@ -64,7 +132,7 @@ bool test_puny_encode( puny_tests_t::puny_test_t test_case ) {
 
 BOOST_AUTO_TEST_CASE( punycode_test_encode ) {
 	std::cout << "PunyCode Encoding\n";
-	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
+	auto config_data = puny_tests_t{ }.from_file( "../puny_coder_tests.json" );
 	for( auto const & puny : config_data.tests ) {
 		BOOST_REQUIRE( test_puny_encode( puny ) );
 	}
@@ -79,7 +147,7 @@ bool equal_nc( std::u32string lhs, std::u32string rhs ) {
 	});
 }
 
-std::u32string to_u32string( boost::string_ref value ) {
+std::u32string to_u32string( boost::string_view value ) {
 	auto tmp = daw::range::create_char_range( value.begin( ), value.end( ) );
 	return tmp.to_u32string( );
 }
@@ -93,7 +161,7 @@ bool test_puny_decode( puny_tests_t::puny_test_t test_case ) {
 
 BOOST_AUTO_TEST_CASE( punycode_test_decode ) {
 	std::cout << "PunyCode Decoding\n";
-	auto config_data = puny_tests_t{ }.decode_file( "../puny_coder_tests.json" );
+	auto config_data = puny_tests_t{ }.from_file( "../puny_coder_tests.json" );
 	for( auto const & puny : config_data.tests ) {
 		BOOST_REQUIRE( test_puny_decode( puny ) );
 	}

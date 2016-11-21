@@ -246,12 +246,12 @@ namespace daw {
 		}
 
 		template<typename Delemiter>
-		std::vector<boost::string_ref> split( boost::string_ref input, Delemiter delemiter ) {
-			std::vector<boost::string_ref> result;
+		std::vector<boost::string_view> split( boost::string_view input, Delemiter delemiter ) {
+			std::vector<boost::string_view> result;
 			auto pos = input.find_first_of( delemiter );
-			while( !input.empty( ) && boost::string_ref::npos != pos ) {
+			while( !input.empty( ) && boost::string_view::npos != pos ) {
 				result.emplace_back( input.data( ), pos );
-				input = input.substr( pos + 1, boost::string_ref::npos );
+				input = input.substr( pos + 1, boost::string_view::npos );
 				pos = input.find_first_of( delemiter );
 			}
 			result.push_back( input );
@@ -259,7 +259,7 @@ namespace daw {
 		}
 	}    // namespace anonymous
 
-	std::string to_puny_code( boost::string_ref input ) {
+	std::string to_puny_code( boost::string_view input ) {
 		std::stringstream ss;
 		auto parts = split( input, '.' );
 		bool is_first = true;
@@ -276,7 +276,7 @@ namespace daw {
 		return ss.str( );
 	}
 
-	std::string from_puny_code( boost::string_ref input ) {
+	std::string from_puny_code( boost::string_view input ) {
 		auto parts = split( input, '.' );
 		bool is_first = true;
 		std::stringstream ss;
