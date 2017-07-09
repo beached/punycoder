@@ -24,9 +24,9 @@
 #pragma once
 
 #include <string>
-#include <boost/utility/string_view.hpp>
+#include <daw/daw_string_view.h>
 
 namespace daw {
-	std::string to_puny_code( boost::string_view input );
-	std::string from_puny_code( boost::string_view input );
+	std::string to_puny_code( daw::string_view input );
+	std::string from_puny_code( daw::string_view input );
 }
