@@ -39,16 +39,19 @@ externalproject_add(
 )
 
 externalproject_add(
-	parse_json_prj
-	GIT_REPOSITORY "https://github.com/beached/parse_json.git"
+	daw_json_link_prj
+	GIT_REPOSITORY "https://github.com/beached/daw_json_link.git"
 	GIT_TAG "master"
-	SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/parse_json"
+	SOURCE_DIR "${CMAKE_BINARY_DIR}/dependencies/daw_json_link"
 	INSTALL_DIR "${CMAKE_BINARY_DIR}/install"
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/install
 )
 
 
 set( HEADER_FOLDER "include" )
+set( SOURCE_FOLDER "src" )
+set( TEST_FOLDER "tests" )
+
 include_directories( ${HEADER_FOLDER} )
 
 set( HEADER_FILES
@@ -56,7 +59,7 @@ set( HEADER_FILES
 )
 
 set( SOURCE_FILES
-	puny_coder.cpp
+	${SOURCE_FOLDER}/puny_coder.cpp
  )
 
 include_directories( SYSTEM "${CMAKE_BINARY_DIR}/install/include" )
@@ -72,8 +75,8 @@ target_link_libraries( puny_coder char_range ${Boost_LIBRARIES} )
 install( TARGETS puny_coder DESTINATION lib )
 install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/daw/puny_coder )
 
-add_executable( puny_coder_test_bin puny_coder_test.cpp ${HEADER_FILES} )
-add_dependencies( puny_coder_test_bin parse_json_prj )
-target_link_libraries( puny_coder_test_bin puny_coder parse_json char_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
+add_executable( puny_coder_test_bin ${TEST_FOLDER}/puny_coder_test.cpp ${HEADER_FILES} )
+add_dependencies( puny_coder_test_bin daw_json_link_prj )
+target_link_libraries( puny_coder_test_bin puny_coder char_range ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} )
 add_test( puny_coder_test, puny_coder_test_bin )
 
