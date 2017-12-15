@@ -244,19 +244,6 @@ namespace daw {
 			}
 			return output;
 		}
-
-		template<typename Delemiter>
-		std::vector<daw::string_view> split( daw::string_view input, Delemiter delemiter ) {
-			std::vector<daw::string_view> result;
-			auto pos = input.find_first_of( delemiter );
-			while( !input.empty( ) && daw::string_view::npos != pos ) {
-				result.emplace_back( input.data( ), pos );
-				input = input.substr( pos + 1, daw::string_view::npos );
-				pos = input.find_first_of( delemiter );
-			}
-			result.push_back( input );
-			return result;
-		}
 	}    // namespace anonymous
 
 	std::string to_puny_code( daw::string_view input ) {

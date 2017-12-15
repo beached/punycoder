@@ -22,9 +22,9 @@
 
 #define BOOST_TEST_MODULE puny_coder_test 
 
-#include <boost/test/unit_test.hpp>
 #include <iostream>
 
+#include <daw/boost_test.h>
 #include <daw/char_range/daw_char_range.h>
 #include <daw/daw_parser_helper.h>
 #include <daw/daw_string_view.h>
